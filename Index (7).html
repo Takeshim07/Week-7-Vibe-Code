@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Same Words, Different Worlds</title>
+<style>
+  /* ── System font stacks — no external dependencies ── */
+  :root {
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-mono: 'Courier New', Courier, monospace;
+    --font-serif: Georgia, 'Times New Roman', serif;
+
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #2a2a3a;
+    --accent: #e8d5a3;
+    --text: #d4d4e8;
+    --muted: #666680;
+    --danger: #e85d4a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    opacity: 0.035;
+    pointer-events: none;
+    z-index: 9999;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ── Layout ── */
+  header {
+    padding: 60px 40px 40px;
+    max-width: 860px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(30px, 5vw, 54px);
+    font-weight: 700;
+    line-height: 1.08;
+    color: #fff;
+    margin-bottom: 20px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .intro {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--muted);
+    max-width: 620px;
+  }
+
+  /* ── Input section ── */
+  .input-section {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 40px 30px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .input-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  #msgInput {
+    flex: 1;
+    min-width: 200px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: #fff;
+    padding: 13px 16px;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  #msgInput:focus { border-color: var(--accent); }
+  #msgInput::placeholder { color: var(--muted); }
+
+  .btn-transmit {
+    background: var(--accent);
+    color: #0a0a0f;
+    border: none;
+    padding: 13px 26px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .btn-transmit:hover, .btn-transmit:focus { opacity: 0.85; outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn-transmit:active { transform: scale(0.97); }
+
+  .btn-reset {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 13px 18px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .btn-reset:hover, .btn-reset:focus { color: var(--text); border-color: var(--text); outline: 2px solid var(--border); outline-offset: 2px; }
+
+  .examples-row { margin-top: 4px; }
+
+  .examples-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  .example-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 5px 13px;
+    font-size: 13px;
+    cursor: pointer;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+    font-family: var(--font-sans);
+    vertical-align: middle;
+  }
+
+  .example-btn:hover, .example-btn:focus { border-color: var(--accent); color: var(--accent); outline: none; }
+
+  /* ── Output ── */
+  #output { display: none; max-width: 1200px; margin: 0 auto; padding: 40px; }
+
+  .original-msg-display {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 14px 20px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .original-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .original-text { font-size: 16px; color: #fff; font-style: italic; }
+
+  .grid-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  /* ── Cards ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 18px;
+    margin-bottom: 40px;
+  }
+
+  .media-card {
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    position: relative;
+    overflow: visible;
+    animation: fadeUp 0.35s ease both;
+  }
+
+  .media-card:nth-child(1) { animation-delay: 0.00s; }
+  .media-card:nth-child(2) { animation-delay: 0.06s; }
+  .media-card:nth-child(3) { animation-delay: 0.12s; }
+  .media-card:nth-child(4) { animation-delay: 0.18s; }
+  .media-card:nth-child(5) { animation-delay: 0.24s; }
+  .media-card:nth-child(6) { animation-delay: 0.30s; }
+  .media-card:nth-child(7) { animation-delay: 0.36s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .media-card:hover { transform: translateY(-3px); box-shadow: 0 6px 24px rgba(0,0,0,0.4); }
+  .media-card:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .media-card.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(232,213,163,0.12); }
+
+  .card-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .card-body { padding: 18px; min-height: 170px; }
+
+  .meaning-note {
+    font-size: 11px;
+    line-height: 1.55;
+    color: var(--muted);
+    padding: 10px 14px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-style: italic;
+  }
+
+  /* ══ Telegraph ══ */
+  .card-telegraph { background: #0d0b08; border-color: #3a2e1a; }
+  .card-telegraph .card-tag { background: #150f04; color: #c8a84a; border-color: #3a2e1a; }
+  .card-telegraph .card-body { font-family: var(--font-mono); color: #c8a84a; }
+  .telegraph-header { font-size: 9px; opacity: 0.55; margin-bottom: 10px; border-bottom: 1px solid #3a2e1a; padding-bottom: 8px; line-height: 1.7; letter-spacing: 0.06em; }
+  .telegraph-msg { font-size: 17px; line-height: 1.45; word-break: break-word; letter-spacing: 0.06em; }
+  .telegraph-footer { font-size: 10px; margin-top: 12px; color: #8a6820; border-top: 1px solid #3a2e1a; padding-top: 8px; display: flex; justify-content: space-between; }
+
+  /* ══ Newspaper ══ */
+  .card-newspaper { background: #f4efe6; border-color: #bbb; }
+  .card-newspaper .card-tag { background: #1a1a1a; color: #f4efe6; border-color: #333; }
+  .card-newspaper .card-body { color: #111; padding: 14px 16px; }
+  .card-newspaper .meaning-note { background: #ede8df; color: #555; border-top: 1px solid #ccc; }
+  .newspaper-masthead { font-family: var(--font-serif); font-size: 18px; font-weight: 700; text-align: center; border-bottom: 3px double #1a1a1a; padding-bottom: 5px; margin-bottom: 6px; letter-spacing: 0.04em; }
+  .newspaper-dateline { font-size: 8px; text-align: center; color: #555; margin-bottom: 8px; font-family: var(--font-mono); letter-spacing: 0.04em; border-bottom: 1px solid #aaa; padding-bottom: 5px; }
+  .newspaper-headline { font-family: var(--font-serif); font-size: 16px; font-weight: 700; line-height: 1.2; margin-bottom: 8px; text-align: center; }
+  .newspaper-body { font-size: 10.5px; line-height: 1.55; color: #333; columns: 2; column-gap: 10px; font-family: var(--font-serif); }
+
+  /* ══ Radio ══ */
+  .card-radio { background: #060c12; border-color: #182840; }
+  .card-radio .card-tag { background: #09111d; color: #7ec8e3; border-color: #182840; }
+  .card-radio .card-body { color: #7ec8e3; }
+  .radio-header { font-family: var(--font-mono); font-size: 9px; opacity: 0.55; margin-bottom: 10px; letter-spacing: 0.06em; }
+  .radio-bars { display: flex; align-items: flex-end; gap: 3px; height: 22px; margin-bottom: 12px; }
+  .radio-bar { width: 4px; background: #7ec8e3; opacity: 0.55; animation: radioBar 0.8s ease-in-out infinite alternate; border-radius: 1px; }
+  @keyframes radioBar { from { height: 3px; } to { height: 100%; } }
+  .radio-script { font-family: var(--font-serif); font-size: 14px; line-height: 1.65; }
+  .radio-static { font-family: var(--font-mono); font-size: 9px; color: #2a5060; margin-top: 10px; letter-spacing: 0.04em; }
+
+  /* ══ Television ══ */
+  .card-tv { background: #06060e; border-color: #28122a; }
+  .card-tv .card-tag { background: #0e060f; color: #e85d4a; border-color: #38183a; }
+  .card-tv .card-body { padding-bottom: 10px; }
+  .tv-screen { background: #0a0312; border: 2px solid #28122a; padding: 12px 14px 10px; position: relative; min-height: 110px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .tv-network { font-family: var(--font-mono); font-size: 9px; color: rgba(232,93,74,0.45); position: absolute; top: 8px; right: 10px; letter-spacing: 0.1em; }
+  .tv-live { display: inline-block; background: var(--danger); color: #fff; font-family: var(--font-mono); font-size: 9px; font-weight: 700; padding: 2px 6px; letter-spacing: 0.1em; margin-bottom: 6px; width: fit-content; animation: blink 1.4s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .tv-lower-third { background: var(--danger); color: #fff; padding: 7px 10px; font-family: var(--font-sans); font-size: 13px; font-weight: 600; line-height: 1.3; }
+  .tv-subline { background: rgba(232,93,74,0.18); color: rgba(255,255,255,0.65); padding: 4px 10px; font-size: 9px; font-family: var(--font-mono); letter-spacing: 0.06em; }
+
+  /* ══ PLATO ══ */
+  .card-plato { background: #000810; border-color: #002840; }
+  .card-plato .card-tag { background: #000c1c; color: #00c0f0; border-color: #002840; }
+  .card-plato .card-body { font-family: var(--font-mono); color: #00c0f0; font-size: 11.5px; line-height: 1.75; }
+  .plato-sys { color: #004060; font-size: 9px; margin-bottom: 10px; border-bottom: 1px solid #002840; padding-bottom: 6px; letter-spacing: 0.06em; }
+  .plato-post { margin-bottom: 4px; }
+  .plato-user { color: #00a0c8; }
+  .plato-reply { color: #007a9a; margin-left: 10px; font-size: 10.5px; }
+  .plato-cursor { display: inline-block; width: 7px; height: 12px; background: #00c0f0; animation: blink 1s step-end infinite; vertical-align: middle; margin-left: 2px; }
+
+  /* ══ ARPANET ══ */
+  .card-arpanet { background: #060a06; border-color: #182818; }
+  .card-arpanet .card-tag { background: #090e09; color: #4caf50; border-color: #182818; }
+  .card-arpanet .card-body { font-family: var(--font-mono); font-size: 11px; color: #4caf50; line-height: 1.85; }
+  .arpanet-route { color: #246024; font-size: 9px; margin-bottom: 10px; line-height: 1.65; border-bottom: 1px solid #182818; padding-bottom: 7px; letter-spacing: 0.03em; }
+
+  /* ══ Hypertext ══ */
+  .card-hypertext { background: #07070f; border-color: #1e1e44; overflow: visible; }
+  .card-hypertext .card-tag { background: #0b0b1c; color: #9898f8; border-color: #1e1e44; }
+  .card-hypertext .card-body { font-family: var(--font-sans); font-size: 14px; line-height: 1.8; color: #c0c0f8; overflow: visible; }
+  .hypertext-header { font-family: var(--font-mono); font-size: 9px; color: #363670; margin-bottom: 10px; border-bottom: 1px solid #1e1e44; padding-bottom: 6px; letter-spacing: 0.04em; }
+
+  .hyperlink {
+    color: #6868f0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .hyperlink:hover, .hyperlink:focus { color: #9898f8; outline: none; }
+
+  .hyperlink .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #14143a;
+    border: 1px solid #3838aa;
+    color: #c0c0f8;
+    font-size: 10px;
+    padding: 6px 10px;
+    z-index: 100;
+    pointer-events: none;
+    font-family: var(--font-mono);
+    width: 190px;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.45;
+  }
+
+  .hyperlink:hover .tooltip,
+  .hyperlink:focus .tooltip { display: block; }
+
+  /* ── Comparison panel ── */
+  .comparison-panel { border: 1px solid var(--border); background: var(--surface); margin-top: 8px; }
+
+  .comparison-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .comparison-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); }
+  .comparison-hint { font-size: 12px; color: var(--muted); }
+
+  .comparison-body { display: grid; grid-template-columns: repeat(3, 1fr); }
+
+  .comp-dimension { padding: 18px 20px; border-right: 1px solid var(--border); }
+  .comp-dimension:last-child { border-right: none; }
+  .comp-dim-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+  .comp-value { font-family: var(--font-serif); font-size: 15px; font-style: italic; color: var(--accent); margin-bottom: 6px; }
+  .comp-desc { font-size: 12px; line-height: 1.6; color: var(--muted); }
+
+  .comp-detail { padding: 16px 20px; border-top: 1px solid var(--border); font-size: 13px; line-height: 1.75; color: var(--text); display: none; }
+  .comp-detail.visible { display: block; }
+
+  footer { text-align: center; padding: 36px 40px; color: var(--muted); font-size: 10px; font-family: var(--font-mono); letter-spacing: 0.1em; border-top: 1px solid var(--border); margin-top: 40px; }
+
+  @media (max-width: 640px) {
+    header, .input-section { padding: 28px 18px; }
+    #output { padding: 28px 18px; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .comparison-body { grid-template-columns: 1fr; }
+    .comp-dimension { border-right: none; border-bottom: 1px solid var(--border); }
+    .newspaper-body { columns: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">SCSIII: Computation, Culture &amp; Society — Week 7: Social Computing</div>
+  <h1>Same Words,<br><span>Different Worlds</span></h1>
+  <p class="intro">Type one sentence and transmit it through seven media environments. The words stay the same. The meaning does not. McLuhan's argument was not that content is irrelevant — it was that every medium reorganizes the scale, speed, audience, and social meaning of communication.</p>
+</header>
+
+<div class="input-section">
+  <label class="input-label" for="msgInput">Your message</label>
+  <div class="input-row">
+    <input type="text" id="msgInput" placeholder="Type any sentence…" maxlength="140" aria-label="Enter a message to transmit">
+    <button class="btn-transmit" onclick="transmit()" aria-label="Transmit message">Transmit →</button>
+    <button class="btn-reset" onclick="resetAll()" aria-label="Reset">Reset</button>
+  </div>
+  <div class="examples-row">
+    <span class="examples-label">Try:</span>
+    <button class="example-btn" onclick="useExample(this)">"We need to talk."</button>
+    <button class="example-btn" onclick="useExample(this)">"I'm safe. Don't worry."</button>
+    <button class="example-btn" onclick="useExample(this)">"The meeting is canceled."</button>
+    <button class="example-btn" onclick="useExample(this)">"Something has changed."</button>
+  </div>
+</div>
+
+<div id="output">
+  <div class="original-msg-display">
+    <span class="original-label">Original message:</span>
+    <span class="original-text" id="originalText"></span>
+  </div>
+  <div class="grid-label">↓ Seven media environments — same words, different social meaning</div>
+  <div class="cards-grid" id="cardsGrid" role="list"></div>
+
+  <div class="comparison-panel">
+    <div class="comparison-header">
+      <span class="comparison-title">What Changed?</span>
+      <span class="comparison-hint" id="compHint">Click any card above to analyze it.</span>
+    </div>
+    <div class="comparison-body">
+      <div class="comp-dimension">
+        <div class="comp-dim-label">Speed</div>
+        <div class="comp-value" id="compSpeed">—</div>
+        <div class="comp-desc" id="compSpeedDesc">Select a medium to compare.</div>
+      </div>
+      <div class="comp-dimension">
+        <div class="comp-dim-label">Audience</div>
+        <div class="comp-value" id="compAudience">—</div>
+        <div class="comp-desc" id="compAudienceDesc"></div>
+      </div>
+      <div class="comp-dimension">
+        <div class="comp-dim-label">Authority</div>
+        <div class="comp-value" id="compAuthority">—</div>
+        <div class="comp-desc" id="compAuthorityDesc"></div>
+      </div>
+    </div>
+    <div class="comp-detail" id="compDetail"></div>
+  </div>
+</div>
+
+<footer>McLuhan, <em>The Medium is the Massage</em> (1967) &nbsp;·&nbsp; Licklider &amp; Taylor, "The Computer as a Communication Device" (1968) &nbsp;·&nbsp; Rankin, "PLATO's Republic" (2018)</footer>
+
+<script>
+var mediaData = [
+
+  {
+    id: 'telegraph', name: 'Telegraph', year: '~1850s–1920s', cssClass: 'card-telegraph',
+    speed: 'Fast but expensive',
+    audience: 'Point-to-point, official',
+    authority: 'High — costly, rare, formal',
+    speedDesc: 'Near-instant transmission, but every word costs money. Senders edit ruthlessly before sending.',
+    audienceDesc: 'A private, directed channel — operator to operator, one sender to one recipient. No broadcast, no community.',
+    authorityDesc: 'A telegram signals importance. The scarcity and cost of the medium lend the message gravity it may not have earned on its own.',
+    detail: 'The telegraph forced compression. Each word had a price, so language was stripped to its bones. What remained felt official, urgent — almost legal. McLuhan noted that electric media accelerated communication while simultaneously dehumanizing it: the human voice vanished, replaced by tapped codes and typeface. "STOP" replacing a period is not merely stylistic — it is the medium reshaping grammar itself. The message gains authority precisely because it has been compressed.',
+    render: function(msg) {
+      var words = msg.trim().split(/\s+/);
+      var upper = msg.toUpperCase().replace(/[.!]/g, ' STOP').replace(/[?,]/g, ' ').replace(/\s+/g, ' ').trim();
+      var cost = (words.length * 0.25).toFixed(2);
+      var d = new Date();
+      var dateStr = d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}).toUpperCase();
+      return '<div class="card-body">' +
+        '<div class="telegraph-header">WESTERN UNION TELEGRAM — PAID<br>' + dateStr + ' · ' + words.length + ' WORDS CHARGED</div>' +
+        '<div class="telegraph-msg">' + upper + '</div>' +
+        '<div class="telegraph-footer"><span>EST. COST: $' + cost + '</span><span>REPLY REQUESTED · URGENT</span></div>' +
+        '</div>' +
+        '<div class="meaning-note">Compression converts the message into something official and high-stakes. Intimacy is stripped away; every remaining word carries weight.</div>';
+    }
+  },
+
+  {
+    id: 'newspaper', name: 'Newspaper', year: '~1700s–present', cssClass: 'card-newspaper',
+    speed: 'Slow — one daily cycle',
+    audience: 'Mass public, anonymous',
+    authority: 'Institutional — "the record"',
+    speedDesc: 'Printed once a day. By the time you read it, the moment has passed. The medium trades speed for permanence.',
+    audienceDesc: 'Thousands of strangers read the same words simultaneously, in private. A personal message becomes a shared public object.',
+    authorityDesc: 'Print confers permanence. The institution frames the message — editor, masthead, dateline all lend authority the sender did not have alone.',
+    detail: 'The newspaper industrialized public opinion. McLuhan described print as a "hot" medium: high definition, uniform, demanding passive reception. When a personal message enters newspaper logic, it receives a headline, a byline, editorial context — it is reframed by an institution. The newspaper does not merely report events; it authorizes them. Once published, the sentence is no longer yours. The institution has claimed it.',
+    render: function(msg) {
+      var headline = msg.replace(/\.$/, '').toUpperCase();
+      var d = new Date();
+      var today = d.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'});
+      return '<div class="card-body">' +
+        '<div class="newspaper-masthead">THE DAILY RECORD</div>' +
+        '<div class="newspaper-dateline">' + today.toUpperCase() + ' · VOL. CXLII · EST. 1882 · PRICE: FIVE CENTS</div>' +
+        '<div class="newspaper-headline">' + headline + '</div>' +
+        '<div class="newspaper-body">Sources confirmed the statement, raising further questions about its origins and the parties involved. Officials declined to comment at press time. The matter is described as ongoing. Further reporting is expected. The implications, experts say, may be significant. Readers are urged to consult subsequent editions.</div>' +
+        '</div>' +
+        '<div class="meaning-note">Institutional framing converts private speech into public fact. Editorial voice displaces personal voice — the medium authorizes the message.</div>';
+    }
+  },
+
+  {
+    id: 'radio', name: 'Radio Broadcast', year: '~1920s–1940s', cssClass: 'card-radio',
+    speed: 'Immediate, simultaneous',
+    audience: 'Mass — collective, strangers',
+    authority: 'Personal voice, institutional reach',
+    speedDesc: 'Heard by millions at the exact same moment. No delay, no re-reading. The message exists only while it is being broadcast.',
+    audienceDesc: 'Strangers listening together, each in private. Mass and intimate simultaneously — a paradox unique to radio.',
+    authorityDesc: 'The voice creates personality and trust. But the message vanishes immediately. Nothing is on the record. Radio authority is felt, not written.',
+    detail: 'Radio was the first medium to create mass simultaneity — millions of strangers sharing the same moment in private. McLuhan called radio a "tribal drum," reverting to acoustic community after centuries of print individualism. The broadcaster addresses everyone and no one. Your message, read aloud by a stranger\'s voice, gains warmth and urgency — but once broadcast, it is gone. The ephemerality is part of the meaning.',
+    render: function(msg) {
+      var bars = '';
+      for (var i = 0; i < 16; i++) {
+        bars += '<div class="radio-bar" style="animation-delay:' + (i * 0.055).toFixed(2) + 's;animation-duration:' + (0.55 + (i % 5) * 0.12).toFixed(2) + 's"></div>';
+      }
+      return '<div class="card-body">' +
+        '<div class="radio-header">◉ ON AIR · WUIC 890 AM · LIVE TRANSMISSION</div>' +
+        '<div class="radio-bars">' + bars + '</div>' +
+        '<div class="radio-script">"Good evening. We interrupt regular programming. The following has been received: <em>' + msg + '</em> — We repeat — <em>' + msg + '</em> Stay tuned."</div>' +
+        '<div class="radio-static">~~ kssshhhh ~~ SIGNAL MODERATE ~~ kssshhhh ~~</div>' +
+        '</div>' +
+        '<div class="meaning-note">The message becomes collective and immediate — but ephemeral. It is heard once, then vanishes. No copy remains.</div>';
+    }
+  },
+
+  {
+    id: 'tv', name: 'Television', year: '~1950s–present', cssClass: 'card-tv',
+    speed: 'Instantaneous, spectacular',
+    audience: 'Mass — passive, visual',
+    authority: 'Spectacle — emotional urgency',
+    speedDesc: 'Live, instantaneous, global. But the image does the emotional work, not the words. Affect precedes meaning.',
+    audienceDesc: 'Millions watching in isolated living rooms. Mass reach and private viewing coexist — community without presence.',
+    authorityDesc: 'The red banner and the word BREAKING create urgency regardless of content. The medium pre-interprets the message as a crisis before the viewer reads a word.',
+    detail: 'Television is McLuhan\'s paradigmatic "cool" medium — low definition, demanding emotional participation to fill in the gaps. The lower-third graphic, the red banner, the blinking LIVE indicator — these are not informational. They are affective. Television does not deliver news; it delivers sensation. The same message that is a quiet note in a letter becomes an emergency under a BREAKING banner. The medium transforms the emotional register of the message before the viewer processes the words.',
+    render: function(msg) {
+      return '<div class="card-body">' +
+        '<div class="tv-screen">' +
+        '<span class="tv-network">CHANNEL 4 NEWS</span>' +
+        '<span class="tv-live">● LIVE</span>' +
+        '<div class="tv-lower-third">' + msg + '</div>' +
+        '<div class="tv-subline">BREAKING NEWS · DEVELOPING STORY · DETAILS EMERGING</div>' +
+        '</div></div>' +
+        '<div class="meaning-note">Visual spectacle and urgency signals emotionally amplify the message before the viewer has time to assess its content rationally.</div>';
+    }
+  },
+
+  {
+    id: 'plato', name: 'PLATO Notesfile', year: '~1970s, UIUC', cssClass: 'card-plato',
+    speed: 'Asynchronous, persistent',
+    audience: 'Community — known, participatory',
+    authority: 'Collective — socially negotiated',
+    speedDesc: 'Messages persist on the system indefinitely. Others respond when they log in. Time is stretched and communally shared.',
+    audienceDesc: 'A community of known users — not strangers. Replies are structurally part of the message. Sender and community co-author the meaning.',
+    authorityDesc: 'No single authority. Meaning is argued over, amended, disputed. The community is the editor.',
+    detail: 'PLATO at the University of Illinois was the first networked social computing community — years before ARPANET email reached ordinary users. Joy Rankin\'s reading describes how students built genuine friendships through notesfiles: asynchronous discussion threads that look, in retrospect, remarkably like modern forums. On PLATO, a message does not arrive complete — it is immediately opened up by replies. The community interprets it, disputes it, extends it. Meaning is never final. This is the social computing McLuhan\'s broadcast framework struggles to account for: not one-to-many, not one-to-one, but communal.',
+    render: function(msg) {
+      var replies = [
+        {user: 'KJohnson@UIUC', text: 'Can you say more? What exactly do you mean?'},
+        {user: 'mwatts@PLATO',  text: 'Saw this coming. We talked about it in last week\'s thread.'},
+        {user: 'rl_evans',      text: 'Replying later. Saving this for the group.'}
+      ];
+      var html = '<div class="card-body">' +
+        '<div class="plato-sys">PLATO NOTESFILE · NODE 37 · UIUC 1974 · THREAD ACTIVE</div>' +
+        '<div class="plato-post"><span class="plato-user">[you]:</span> ' + msg + '</div>';
+      for (var i = 0; i < replies.length; i++) {
+        html += '<div class="plato-reply"><span class="plato-user">[' + replies[i].user + ']:</span> ' + replies[i].text + '</div>';
+      }
+      html += '<div class="plato-post"><span class="plato-cursor"></span></div>';
+      html += '</div><div class="meaning-note">Replies make the message communal and contested. The community keeps rewriting it — the sender loses control the moment they post.</div>';
+      return html;
+    }
+  },
+
+  {
+    id: 'arpanet', name: 'ARPANET Email', year: '~1971, ARPANET', cssClass: 'card-arpanet',
+    speed: 'Asynchronous, packet-routed',
+    audience: 'Point-to-point, technical',
+    authority: 'Personal but permanently logged',
+    speedDesc: 'Routed across multiple nodes. Delivery is not guaranteed or instantaneous — the network decides the path.',
+    audienceDesc: 'Addressed to one person, but passing through multiple machines operated by strangers. Technically witnessed at every hop.',
+    authorityDesc: 'The sender is identified, the path is logged, the timestamp is recorded. Every personal message becomes a permanent document.',
+    detail: 'Licklider and Taylor\'s 1968 paper imagined computers enabling "communities of common interest" unconstrained by geography. ARPANET email delivered part of that vision — but also something they may not have fully anticipated: every message is routed through infrastructure you do not control, logged at each node, and permanently timestamped. The medium is not just the email — it is the entire packet-switching network. Your message travels through strangers\' machines. It is intimate and surveilled at once. The network is a witness.',
+    render: function(msg) {
+      var d = new Date();
+      var dateStr = d.toUTCString().replace('GMT', '+0000 (UTC)');
+      return '<div class="card-body">' +
+        '<div class="arpanet-route">ROUTE: UCLA-NMC → BBN-NET → MIT-AI → SRI-AI<br>HOPS: 4 · TTL: 128 · CHECKSUM: OK · DELIVERED</div>' +
+        'FROM:    user@UCLA-NMC.ARPA<br>' +
+        'TO:      recipient@MIT-AI.ARPA<br>' +
+        'DATE:    ' + dateStr + '<br>' +
+        'SUBJECT: [none]<br><br>' +
+        msg + '<br><br>' +
+        '[END OF MESSAGE · LOGGED · NODE 12 · RECORD RETAINED]' +
+        '</div>' +
+        '<div class="meaning-note">The routing path turns the message into a technical document. Personal — and permanently archived. The infrastructure is part of the meaning.</div>';
+    }
+  },
+
+  {
+    id: 'hypertext', name: 'Hypertext / Web', year: '~Nelson 1965, Web 1991', cssClass: 'card-hypertext',
+    speed: 'Nonlinear, reader-controlled',
+    audience: 'Networked, associative, fragmented',
+    authority: 'Distributed — every link is an argument',
+    speedDesc: 'The reader controls the path. Time is nonlinear — you can leave, return, follow a link, and never come back.',
+    audienceDesc: 'A networked reader who is also a navigator. The audience is not passive; every click is an interpretive act.',
+    authorityDesc: 'Links are editorial decisions. Each association is a claim about what belongs together. The author no longer controls the reading.',
+    detail: 'Ted Nelson coined "hypertext" in 1965 and spent decades building Xanadu — a system where every document could reference every other, with visible trails of connection and bidirectional links. The web realized a stripped-down version: one-directional links, no transclusion, no version history. In hypertext, meaning is never contained in a single node. It spreads outward across links. The reader constructs meaning through navigation. Hover over a linked word to see how the medium makes meaning lateral rather than linear — Nelson\'s insight made interactive.',
+    render: function(msg) {
+      var tooltips = [
+        'See also: Licklider, "Man-Computer Symbiosis," 1960',
+        'Related: McLuhan on "the medium is the message"',
+        'Cross-ref: PLATO notesfile thread #4412',
+        'Compare: Berners-Lee vs. Nelson on link directionality',
+        'Source contested — see talk page',
+        'Xanadu would have preserved the original context here',
+        'This phrase appears in 847 other documents'
+      ];
+      var words = msg.trim().split(/\s+/);
+      var linked = [];
+      var linkCount = 0;
+
+      for (var i = 0; i < words.length; i++) {
+        // Link every 3rd word starting at index 1, OR force the last word if no links yet
+        var shouldLink = (i % 3 === 1) || (linkCount === 0 && i === words.length - 1);
+        if (shouldLink) {
+          var tip = tooltips[linkCount % tooltips.length];
+          linked.push('<span class="hyperlink" tabindex="0">' + words[i] + '<span class="tooltip">' + tip + '</span></span>');
+          linkCount++;
+        } else {
+          linked.push(words[i]);
+        }
+      }
+
+      var outbound = Math.max(1, linkCount);
+      return '<div class="card-body">' +
+        '<div class="hypertext-header">HTTP/1.1 200 OK · TEXT/HTML · OUTBOUND LINKS: ' + outbound + ' · NODE: UNKNOWN</div>' +
+        linked.join(' ') +
+        '</div>' +
+        '<div class="meaning-note">Links make meaning lateral and associative. Hover any underlined word. The message opens outward — the reader finishes it, not the sender.</div>';
+    }
+  }
+
+];
+
+// ── Functions ──────────────────────────────────────────────────────────────
+
+function useExample(btn) {
+  var txt = btn.textContent.replace(/["\u201C\u201D]/g, '').trim();
+  document.getElementById('msgInput').value = txt;
+  transmit();
+}
+
+function transmit() {
+  var msg = document.getElementById('msgInput').value.trim();
+  if (!msg) { document.getElementById('msgInput').focus(); return; }
+
+  // Show original message
+  document.getElementById('originalText').textContent = '\u201C' + msg + '\u201D';
+
+  // Build cards
+  var grid = document.getElementById('cardsGrid');
+  grid.innerHTML = '';
+
+  for (var i = 0; i < mediaData.length; i++) {
+    var m = mediaData[i];
+    var card = document.createElement('div');
+    card.className = 'media-card ' + m.cssClass;
+    card.setAttribute('data-id', m.id);
+    card.setAttribute('role', 'listitem');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-label', m.name + ' — click to analyze in comparison panel');
+    card.innerHTML = '<div class="card-tag"><span>' + m.name + '</span><span>' + m.year + '</span></div>' + m.render(msg);
+
+    (function(media) {
+      card.addEventListener('click', function() { selectCard(media); });
+      card.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectCard(media); }
+      });
+    })(m);
+
+    grid.appendChild(card);
+  }
+
+  // Show output
+  var output = document.getElementById('output');
+  output.style.display = 'block';
+  output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Reset comparison panel
+  document.getElementById('compSpeed').textContent = '\u2014';
+  document.getElementById('compAudience').textContent = '\u2014';
+  document.getElementById('compAuthority').textContent = '\u2014';
+  document.getElementById('compSpeedDesc').textContent = 'Select a medium to compare.';
+  document.getElementById('compAudienceDesc').textContent = '';
+  document.getElementById('compAuthorityDesc').textContent = '';
+  document.getElementById('compHint').textContent = 'Click any card above to analyze it.';
+  var det = document.getElementById('compDetail');
+  det.textContent = '';
+  det.classList.remove('visible');
+}
+
+function selectCard(media) {
+  var cards = document.querySelectorAll('.media-card');
+  for (var i = 0; i < cards.length; i++) { cards[i].classList.remove('active'); }
+  var target = document.querySelector('[data-id="' + media.id + '"]');
+  if (target) target.classList.add('active');
+
+  document.getElementById('compSpeed').textContent    = media.speed;
+  document.getElementById('compAudience').textContent = media.audience;
+  document.getElementById('compAuthority').textContent = media.authority;
+  document.getElementById('compSpeedDesc').textContent    = media.speedDesc;
+  document.getElementById('compAudienceDesc').textContent = media.audienceDesc;
+  document.getElementById('compAuthorityDesc').textContent = media.authorityDesc;
+  document.getElementById('compHint').textContent = 'Showing: ' + media.name + ' (' + media.year + ')';
+
+  var det = document.getElementById('compDetail');
+  det.textContent = media.detail;
+  det.classList.add('visible');
+}
+
+function resetAll() {
+  document.getElementById('msgInput').value = '';
+  document.getElementById('output').style.display = 'none';
+  document.getElementById('cardsGrid').innerHTML = '';
+  document.getElementById('originalText').textContent = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.getElementById('msgInput').focus();
+}
+
+document.getElementById('msgInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') transmit();
+});
+</script>
+</body>
+</html>
